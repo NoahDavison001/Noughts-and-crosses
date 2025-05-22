@@ -1,0 +1,54 @@
+Noughts and crosses bot
+
+
+features:
+    - three modes: vs human, algorithm and AI
+    - select mode from menu
+    - takes you to a board, assigns players
+    - win detection, then sent back to menu screen
+
+modes:
+    - against human, user can control both sides (assume both playing from same computer)
+    - against algorithm, uses perfect play algorithm to always win or draw against user
+    - against AI, use machine learning to train, then pit it against the user
+
+initial features:
+    - set up board
+    - vs human working
+    - menu selection
+    - write algorithm
+    - play vs algorithm
+    - sort machine learning
+
+layout:
+    - main()
+        - set up tkinter window for menu
+        - button logic for playing each mode
+    - show_menu()
+        - clears window and displays menu buttons
+    - start_game()
+        - clears window and loads game screen (3x3 grid of buttons for now)
+        - initializes game state dictionary
+    - make_move()
+        - updates game board with move
+        - disables the button that was clicked
+        - switches which players turn it was
+        - checks for a win or draw (check_winner, check_draw)
+    - check_winner()
+        - determines if there is a winner
+        - outputs x, o, or none
+    - check_draw()
+        - check if the game ended in a draw
+        - returns True or False
+    -  end_game()
+        - show message saying who won
+        - return to main menu
+
+
+
+
+additional features:
+- exit button
+- fix UI
+
+- back to menu button mid game
