@@ -1,6 +1,7 @@
 import sys
 from tkinter import *
 from tkinter import ttk
+from alg_player import get_best_move
 
 
 
@@ -14,15 +15,7 @@ def main():
     window.protocol("WM_DELETE_WINDOW", lambda: on_close(window, sys))
 
     # setup state variable
-    state = {
-        "board": [["", "", ""], ["", "", ""], ["", "", ""]],
-        "buttons": [[None for _ in range(3)] for _ in range(3)],
-        "current_player": None,
-        "menuframe": None,
-        "gameboard": None,
-        "turn_label": None,
-        
-    }
+    state = initialize_state()
 
     # show first menu
     show_menu(window, state)
@@ -31,12 +24,29 @@ def main():
 
 
 
-
+def initialize_state():
+    state = {
+        "board": [["", "", ""], ["", "", ""], ["", "", ""]],
+        "buttons": [[None for _ in range(3)] for _ in range(3)],
+        "current_player": None,
+        "menuframe": None,
+        "gameboard": None,
+        "turn_label": None,
+        "game_end": False,
+        "alg_mode": False,
+        "AI_mode": False,
+        "going_first": False,
+        }
+    return state
+    
 
 def show_menu(window, state):
     # clear menu
     if state["gameboard"]:
         state["gameboard"] = None
+
+    # reset mode variables
+    state = initialize_state()
 
     # create frame widget
     if not window.winfo_exists():
@@ -50,7 +60,7 @@ def show_menu(window, state):
     Label(state["menuframe"], text="Main Menu", font="none 18 bold", bg='lightblue').grid(column=0, row=0, sticky=(EW), padx=135, pady=(30, 64))
     Label(state["menuframe"], text="Select an opponent:", font="none 12", bg='lightblue').grid(column=0, row=1, sticky=(EW), padx=135, pady=(0, 20))
     ttk.Button(state["menuframe"], text="VS human", command=lambda: start_game(window, state)).grid(column=0, row=2, sticky=(EW), pady=(0, 30), padx=spacing)
-    ttk.Button(state["menuframe"], text="VS algorithm").grid(column=0, row=3, sticky=(EW), pady=(0, 30), padx=spacing)
+    ttk.Button(state["menuframe"], text="VS algorithm", command=lambda: start_alg_game(window, state)).grid(column=0, row=3, sticky=(EW), pady=(0, 30), padx=spacing)
     ttk.Button(state["menuframe"], text="VS MLA").grid(column=0, row=4, sticky=(EW), padx=spacing, pady=(0, 30))
     ttk.Button(state["menuframe"], text="Exit", command=window.destroy).grid(column=0, row=5, sticky=(), pady=(0, 40))
 
@@ -61,7 +71,7 @@ def show_menu(window, state):
     
 def start_game(window, state):
     # clear window
-    state["menuframe"].grid_forget()
+    state["menuframe"].destroy()
 
     # load game board
     if not window.winfo_exists():
@@ -73,28 +83,51 @@ def start_game(window, state):
     # reset state variables
     state["current_player"] = "o"
     state["board"] = [["p", "p", "p"], ["p", "p", "p"], ["p", "p", "p"]]
+    state["end_game"] = False
 
     # put widgets on board
-    Label(state["gameboard"], text="VS human", font="none 14", bg='lightblue').place(x=200, y=15, anchor="center")
-    for row in range(3):
-        for col in range(3):
-            def make_cmd(x=row, y=col):
-                return lambda: make_move(x, y, state, window)
-            state["buttons"][row][col] = Button(state["gameboard"], text="", command=make_cmd(), font="none 18", width=1, height=1)
-            state["buttons"][row][col].place(x=(55 + col*110), y=(40 + row*100), width=90, height=90)
+
+    # if playing against algorithm
+    if state["alg_mode"]:
+        # alter layout
+        Label(state["gameboard"], text="VS algorithm", font="none 14", bg='lightblue').place(x=200, y=15, anchor="center")
+        for row in range(3):
+            for col in range(3):
+                def make_cmd(y=row, x=col):
+                    return lambda: player_move(x, y, state, window)
+                state["buttons"][row][col] = Button(state["gameboard"], text="", command=make_cmd(), font="none 18", width=1, height=1)
+                state["buttons"][row][col].place(x=(55 + col*110), y=(40 + row*100), width=90, height=90)
     
-    state["turn_label"] = Label(state["gameboard"], text=f"Player {state["current_player"]} turn", font="none 14", bg='lightblue')
-    state["turn_label"].place(x=200, y=345, anchor="n")
+        state["turn_label"] = Label(state["gameboard"], text=f"Player {state["current_player"]} turn", font="none 14", bg='lightblue')
+        state["turn_label"].place(x=200, y=345, anchor="n")
+            
+    # if playing default mode
+    else:
+        Label(state["gameboard"], text="VS human", font="none 14", bg='lightblue').place(x=200, y=15, anchor="center")
+        for row in range(3):
+            for col in range(3):
+                def make_cmd(y=row, x=col):
+                    return lambda: make_move(x, y, state, window)
+                state["buttons"][row][col] = Button(state["gameboard"], text="", command=make_cmd(), font="none 18", width=1, height=1)
+                state["buttons"][row][col].place(x=(55 + col*110), y=(40 + row*100), width=90, height=90)
+        
+        state["turn_label"] = Label(state["gameboard"], text=f"Player {state["current_player"]} turn", font="none 14", bg='lightblue')
+        state["turn_label"].place(x=200, y=345, anchor="n")
 
     
+
+
+def start_alg_game(window, state):
+    # set game mode
+    state["alg_mode"] = True
+    start_game(window, state)
 
 
 
 def make_move(x, y, state, window):
     # update gameboard
-    state["buttons"][x][y].config(text=state["current_player"], state='disabled')
-    state["board"][x][y] = state["current_player"]
-    print(state["board"])
+    state["buttons"][int(y)][int(x)].config(text=state["current_player"], state='disabled')
+    state["board"][int(y)][int(x)] = state["current_player"]
 
     # check for win or draw
     winner = check_winner(state)
@@ -171,8 +204,17 @@ def end_game(winner, state, window):
         state["turn_label"].config(text=f"Player {state["current_player"]} wins!")
     else:
         state["turn_label"].config(text="Draw!")
+    state["game_end"] = True
     # leave message up for 2 seconds, then return to main menu
     window.after(2000, lambda: show_menu(window, state))
+
+
+
+def player_move(x, y, state, window):
+    make_move(x, y, state, window)
+    if not state["game_end"]:
+        alg_move = get_best_move(state)
+        make_move(alg_move[0], alg_move[1], state, window)
 
 
 
