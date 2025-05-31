@@ -1,8 +1,9 @@
-Noughts and Crosses app with various game modes (o_x.py):
+Noughts and Crosses app with various game modes ("o_x.py"):
 
 vs Human allows user to play against someone else at the same computer
 
 vs Algorithm allows user to play against a perfect strategic algorithm; prepare for a lot of draws
+"alg_player.py" contains the algorithm used to determine the best move strategically
 
 vs AI allows user to play against a Q-learning AI. after one training session, AI knows a lot of strategy, enough to block lines and even set up forced wins,
 however still makes mistakes and is definately able to be beaten. more training sessions would perfect the gaps in its logic and raise it to the same level as
